@@ -210,6 +210,14 @@
         "difficulty": 3
       },
       {
+        "slug": "phone-number",
+        "name": "Phone Number",
+        "uuid": "692e89e0-b392-4a82-98e5-7bf7a948ffbf",
+        "practices": [],
+        "prerequisites": [],
+        "difficulty": 3
+      },
+      {
         "slug": "rotational-cipher",
         "name": "Rotational Cipher",
         "uuid": "014d61d3-07ae-42fe-9305-5979394a86c0",
