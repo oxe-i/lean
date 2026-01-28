@@ -16,16 +16,31 @@ def getOk {α β} (except : Except α β) [Inhabited β] : β := except.toOption
 def strip (string : String) (char : Char) : String :=
   String.dropWhile string (·==char) |> (String.dropRightWhile · (·==char))
 
-def stripWhiteSpace (string : String) : String :=
-  String.dropWhile string (·.isWhitespace) |> (String.dropRightWhile . (·.isWhitespace))
-
 def pascalCase  (input : String) : String :=
   input.splitOn "-" |> List.map String.capitalize |> String.join
 
+def setDirectory : IO Unit := do
+  IO.Process.setCurrentDir ".."
+
+def fetchConfiglet : IO Unit := do
+  let _ ← IO.Process.run {
+    cmd := "bin/fetch-configlet"
+  }
+
+def addPracticeExercise (exercise : String) : IO Unit := do
+  let child ← IO.Process.spawn {
+    cmd := "bin/add-practice-exercise",
+    args := #[exercise]
+    stdin  := .inherit
+    stdout := .inherit
+    stderr := .inherit
+  }
+  let _ <- child.wait
+
 def getPath (exercise : String) : IO String := do
-  let info <- IO.Process.run {
-    cmd := "../bin/configlet"
-    args := #["info", "-o", "-v", "d", "-t", ".."]
+  let info ← IO.Process.run {
+    cmd := "bin/configlet",
+    args := #["info", "-o", "-v", "d"]
   }
   let dirPrefix := "Using cached 'problem-specifications' dir: "
   let directory := info.splitOn "\n" |>
@@ -35,7 +50,7 @@ def getPath (exercise : String) : IO String := do
   return s!"{directory}/exercises/{exercise}"
 
 def getToml (exercise : String) : IO (Except String String) := do
-  let path := s!"../exercises/practice/{exercise}/.meta/tests.toml"
+  let path := s!"exercises/practice/{exercise}/.meta/tests.toml"
   try
     let toml <- IO.FS.readFile path
     return .ok toml
@@ -82,7 +97,7 @@ def getCanonicalCases (canonical : TreeMap.Raw String Json) (tests : TreeMap Str
 
 def readExtraCases (exercise : String) : IO (Except String Json) := do
   try
-    let json <- IO.FS.readFile (s!"../exercises/practice/{exercise}/.meta/extra.json")
+    let json <- IO.FS.readFile (s!"exercises/practice/{exercise}/.meta/extra.json")
     return Json.parse json
   catch _ =>
     return .error "No extra cases found."
@@ -119,29 +134,29 @@ def genTestFileContent (pascalExercise : String) (cases : OrderedMap) (extra : A
     let extraTests := getExtraTests genTestCase pascalExercise extra
     let ending := genEnd pascalExercise
     let testContent := intro ++ canonicalTests ++ extraTests ++ ending
-    .ok (stripWhiteSpace testContent ++ "\n")
+    .ok (testContent.trim ++ "\n")
 
 def getIncludes (toml : String) : TreeMap String String :=
   let cases := toml.splitOn "\n\n"
-            |> List.map (·.splitOn "\n" |> List.map stripWhiteSpace)
+            |> List.map (·.splitOn "\n" |> List.map String.trim)
   let includes := cases.filter (fun xs =>
-    let hasInclude := xs.find? (stripWhiteSpace . |> (·.startsWith "include"))
+    let hasInclude := xs.find? (·.trim |> (·.startsWith "include"))
     match hasInclude with
     | none => true
     | some string =>
-      let words := string.splitOn " " |> List.map stripWhiteSpace |> String.join
+      let words := string.splitOn " " |> List.map String.trim |> String.join
       words != "include=false"
   )
   includes.foldr (fun xs acc =>
     match xs with
     | uuid :: descriptionLine :: _ =>
       let formattedUUID := uuid.stripPrefix "[" |> (·.stripSuffix "]")
-      let description := stripWhiteSpace descriptionLine
+      let description := descriptionLine.trim
                         |> (·.stripPrefix "description")
-                        |> (·.dropWhile (·.isWhitespace))
+                        |> (·.trimLeft)
                         |> (·.stripPrefix "=")
-                        |> (·.dropWhile (·.isWhitespace))
-                        |> (strip . '"')
+                        |> (·.trimLeft)
+                        |> (strip · '"')
       acc.insert formattedUUID description
     | _ => acc
   ) Std.TreeMap.empty
@@ -170,7 +185,7 @@ def generateTestFile (exercise : String) : IO Unit := do
       let array := getOk json.getArr?
       match genTestFileContent pascalExercise empty array with
       | .error msg => throw <| IO.userError msg
-      | .ok testContent => IO.FS.writeFile s!"../exercises/practice/{exercise}/{pascalExercise}Test.lean" testContent
+      | .ok testContent => IO.FS.writeFile s!"exercises/practice/{exercise}/{pascalExercise}Test.lean" testContent
   | .ok toml =>
     let tests := getIncludes toml
     let canonicalData <- readCanonicalData exercise
@@ -185,7 +200,7 @@ def generateTestFile (exercise : String) : IO Unit := do
         let array := getOk json.getArr?
         match genTestFileContent pascalExercise empty array with
         | .error msg => throw <| IO.userError msg
-        | .ok testContent => IO.FS.writeFile s!"../exercises/practice/{exercise}/{pascalExercise}Test.lean" testContent
+        | .ok testContent => IO.FS.writeFile s!"exercises/practice/{exercise}/{pascalExercise}Test.lean" testContent
     | .ok maybeMap =>
       match getCanonicalCases maybeMap tests with
       | .error msg => throw <| IO.userError msg
@@ -195,15 +210,15 @@ def generateTestFile (exercise : String) : IO Unit := do
           match genTestFileContent pascalExercise cases #[] with
           | .error msg => throw <| IO.userError msg
           | .ok testContent =>
-            IO.FS.writeFile s!"../exercises/practice/{exercise}/{pascalExercise}Test.lean" testContent
+            IO.FS.writeFile s!"exercises/practice/{exercise}/{pascalExercise}Test.lean" testContent
         | .ok json =>
           let array := getOk json.getArr?
           match genTestFileContent pascalExercise cases array with
           | .error msg => throw <| IO.userError msg
-          | .ok testContent => IO.FS.writeFile s!"../exercises/practice/{exercise}/{pascalExercise}Test.lean" testContent
+          | .ok testContent => IO.FS.writeFile s!"exercises/practice/{exercise}/{pascalExercise}Test.lean" testContent
 
 def addImport (pascalExercise : String) : IO Unit := do
-  let path := s!"./Generator/Generator.lean"
+  let path := s!"generators/Generator/Generator.lean"
   try
     let crtContent <- IO.FS.readFile path
     let lines := crtContent.splitOn "Std.HashMap.ofList [\n"
@@ -213,6 +228,24 @@ def addImport (pascalExercise : String) : IO Unit := do
     IO.FS.writeFile path newContent
   catch _ =>
     return
+
+def kebabCase (pascal : String) : String :=
+  pascal.foldl (fun (acc, start) ch =>
+    if start then
+      (acc.push ch.toLower, false)
+    else if ch.isUpper then
+      (acc ++ s!"-{ch.toLower}", false)
+    else (acc.push ch, false)
+  ) ("", true) |> Prod.fst
+
+def regenerateTestFiles : IO Unit := do
+  let _ ← IO.Process.run {
+    cmd := "bin/configlet"
+    args := #["sync", "-u", "--yes", "--docs", "--filepaths", "--metadata", "--tests", "include"]
+  }
+  for (pascal, _) in Generator.dispatch do
+    let kebab := kebabCase pascal
+    generateTestFile kebab
 
 def generateStub (exercise : String) : IO Unit := do
   let pascalExercise := pascalCase exercise
@@ -255,21 +288,25 @@ def main : IO UInt32 := do
 
 end {pascalExercise}Generator
 "
-  let path := s!"./Generator/Generator/{pascalExercise}Generator.lean"
-  IO.FS.writeFile path (stripWhiteSpace content ++ "\n")
+  let path := s!"generators/Generator/Generator/{pascalExercise}Generator.lean"
+  IO.FS.writeFile path (content.trim ++ "\n")
   match Generator.dispatch.get? pascalExercise with
   | none => addImport pascalExercise
   | some _ => return
 
 def main (args : List String) : IO Unit := do
+  setDirectory
   match args with
-  | "-g" :: exercise :: _ =>
-    generateTestFile (stripWhiteSpace exercise)
+  | "-g" :: exercise :: _
   | "--generate" :: exercise :: _ =>
-    generateTestFile (stripWhiteSpace exercise)
-  | "-s" :: exercise :: _ =>
-    generateStub (stripWhiteSpace exercise)
+    addPracticeExercise exercise
+    generateTestFile exercise.trim
+  | "-s" :: exercise :: _
   | "--stub" :: exercise :: _ =>
-    generateStub (stripWhiteSpace exercise)
+    generateStub exercise.trim
+  | "-r" :: _
+  | "--regenerate" :: _ =>
+    fetchConfiglet
+    regenerateTestFiles
   | _ =>
     showUsage
