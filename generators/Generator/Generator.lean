@@ -13,6 +13,7 @@ import Generator.PalindromeProductsGenerator
 import Generator.EtlGenerator
 import Generator.ClockGenerator
 import Generator.CollatzConjectureGenerator
+import Generator.DiamondGenerator
 import Generator.TransposeGenerator
 import Generator.GameOfLifeGenerator
 import Generator.WordyGenerator
@@ -70,6 +71,7 @@ def dispatch : Std.HashMap String (introGenerator × testCaseGenerator × endBod
     ("Etl", (EtlGenerator.genIntro, EtlGenerator.genTestCase, EtlGenerator.genEnd)),
     ("Clock", (ClockGenerator.genIntro, ClockGenerator.genTestCase, ClockGenerator.genEnd)),
     ("CollatzConjecture", (CollatzConjectureGenerator.genIntro, CollatzConjectureGenerator.genTestCase, CollatzConjectureGenerator.genEnd)),
+    ("Diamond", (DiamondGenerator.genIntro, DiamondGenerator.genTestCase, DiamondGenerator.genEnd)),
     ("Transpose", (TransposeGenerator.genIntro, TransposeGenerator.genTestCase, TransposeGenerator.genEnd)),
     ("GameOfLife", (GameOfLifeGenerator.genIntro, GameOfLifeGenerator.genTestCase, GameOfLifeGenerator.genEnd)),
     ("Wordy", (WordyGenerator.genIntro, WordyGenerator.genTestCase, WordyGenerator.genEnd)),
