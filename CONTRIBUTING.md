@@ -1,39 +1,57 @@
 # How to contribute to the Exercism Lean track
 
-#### **Do you want to add an exercise?**
+## Contributing
 
-- **Ensure that someone else isn't already adding it** by searching the [forum](https://forum.exercism.org/c/programming/lean) and the repository's [issues](https://github.com/exercism/lean/issues) and [pull requests](https://github.com/exercism/lean/pulls).
+We 💙 our community, but **this repository does not accept unsolicited pull requests at this time**.
 
-- If nobody is yet adding the exercise, [open a conversation](https://forum.exercism.org/c/programming/lean) and indicate you'd like to add the exercise.
+Please read this [community blog post][guidelines] for details.
 
-- Follow the [Add a Practice Exercise docs](https://exercism.org/docs/building/tracks/practice-exercises/add).
+### How to contribute
 
-#### **Do you want to report a bug?**
+1. Open a topic on the [Lean forum][lean-forum]
+2. Discuss the proposal with the maintainers
+3. After receiving the go-ahead, submit a pull request
 
-- **Ensure the bug was not already reported** by searching the [forum](https://forum.exercism.org/c/programming/lean).
+Pull requests must follow [Exercism's style guide][style].
 
-- If you're unable to find an open conversation addressing the problem, [open a new one](https://forum.exercism.org/new-topic?category=lean). Be sure to include a **title and clear description**, as much relevant information as possible, and (when possible) a **code sample**.
+Before submitting, please read:
 
-#### **Do you want to fix a bug?**
+- [Contributors Pull Request Guide][contributors-pr-guide]
+- [Pull Request Guide][pr-guide]
 
-- **Ensure that the bug is [reported](#do-you-want-to-report-a-bug)**.
-  Only start fixing the bug when there is agreement on whether (and how) it should be fixed.
+When opening a PR:
 
-- Fix the bug and [submit a Pull Request](https://exercism.org/docs/building/github/contributors-pull-request-guide) to this repository.
+- Clearly describe the problem and the solution
+- Link to the corresponding forum discussion
+- Add a link to the PR in that same discussion
 
-- Ensure the PR description clearly describes the problem and solution.
-  Include a link to the bug's corresponding forum conversation.
+If the PR touches an existing exercise, please also consider [this warning][unnecessary-test-runs].
 
-- Before submitting, please read the [Contributors Pull Request Guide](https://exercism.org/docs/building/github/contributors-pull-request-guide) and [Pull Request Guide](https://exercism.org/docs/community/being-a-good-community-member/pull-requests).
+### Adding an exercise
 
-#### **Do you intend to add a new feature or change an existing one?**
+Practice exercises should follow the [Add a Practice Exercise docs][add-exercise].
 
-- **Ensure that the feature or change is discussed on the [forum](https://forum.exercism.org/c/programming/lean).**
-  Only start adding the feature or change when there is agreement on whether (and how) it should be added or changed.
+All exercises must include a test generator located in:
 
-- Add the feature or change and [submit a Pull Request](https://exercism.org/docs/building/github/contributors-pull-request-guide) to this repository.
+```text
+generator/Generator/Generator
+```
 
-- Ensure the PR description clearly describes the problem and solution.
-  Include a link to the bug's corresponding forum conversation.
+The generator must:
 
-- Before submitting, please read the [Contributors Pull Request Guide](https://exercism.org/docs/building/github/contributors-pull-request-guide) and [Pull Request Guide](https://exercism.org/docs/community/being-a-good-community-member/pull-requests).
+- be imported by `generator/Generator/Generator.lean`
+- define the required generator functions
+- register them in the `dispatch` table
+
+The Lean track provides a generator script to help with this process.
+
+See the [generator documentation][generator-doc].
+
+[guidelines]: https://exercism.org/blog/contribution-guidelines-nov-2023
+[lean-forum]: https://forum.exercism.org/c/programming/lean/761
+[style]: https://exercism.org/docs/building/markdown/style-guide
+[contributors-pr-guide]: https://exercism.org/docs/building/github/contributors-pull-request-guide
+[pr-guide]: https://exercism.org/docs/community/being-a-good-community-member/pull-requests
+[unnecessary-test-runs]: https://exercism.org/docs/building/tracks#h-avoiding-triggering-unnecessary-test-runs
+[add-exercise]: https://exercism.org/docs/building/tracks/practice-exercises/add
+[generator-doc]: generators/GenerateTestFile.md
