@@ -491,6 +491,14 @@
         "difficulty": 5
       },
       {
+        "slug": "queen-attack",
+        "name": "Queen Attack",
+        "uuid": "e522fcb1-b8e3-4e0f-adc6-fba5e8e5ad81",
+        "practices": [],
+        "prerequisites": [],
+        "difficulty": 5
+      },
+      {
         "slug": "relative-distance",
         "name": "Relative Distance",
         "uuid": "22989b73-3cde-4473-b8b1-a96632769843",
